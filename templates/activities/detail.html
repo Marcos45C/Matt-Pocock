@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<p class="back"><a href="{% url 'catalog' %}">← Catálogo</a></p>
+<article>
+  <header class="page-head">
+    <p class="eyebrow">Actividad</p>
+    <h1>{{ activity.title }}</h1>
+    <p class="lead">{{ activity.description }}</p>
+  </header>
+
+  <dl class="facts">
+    <div><dt>Inicio (Ushuaia)</dt><dd>{{ activity.starts_at|date:'d/m/Y H:i' }}</dd></div>
+    <div><dt>Capacidad</dt><dd>{{ activity.capacity }}</dd></div>
+    <div><dt>Disponibilidad</dt><dd>{{ activity.available }} cupos</dd></div>
+    <div><dt>Habilitada</dt><dd>{{ activity.is_active|yesno:'Sí,No' }}</dd></div>
+  </dl>
+
+  <section class="panel">
+    {% if registration %}
+      {% include 'activities/_registration_state.html' with registration=registration can_cancel=can_cancel %}
+      {% if registration.cancelled_at %}
+      <p>No podés volver a inscribirte en esta actividad.</p>
+      {% elif not can_cancel %}
+      <p class="muted">Solo podés cancelar hasta {{ cancellation_window_hours }} horas antes del inicio de la actividad.</p>
+      {% endif %}
+    {% elif can_register %}
+    <form method="post" action="{% url 'register' activity.pk %}" class="inline-form">
+      {% csrf_token %}{{ form }}<button>Inscribirme</button>
+    </form>
+    {% else %}
+    <p class="muted">Esta actividad no admite nuevas inscripciones.</p>
+    {% endif %}
+  </section>
+</article>
+{% endblock %}

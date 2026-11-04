@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+{% regroup activities by starts_at|date:'Y-m-d' as days %}
+<section class="timeline">
+  <header class="page-head">
+    <p class="eyebrow">Próximos encuentros</p>
+    <h1>Actividades</h1>
+    <p class="lead">{{ activities|length }} actividades por delante.</p>
+  </header>
+
+  {% for day in days %}
+  <section class="day">
+    <h2 class="day-title">{{ day.list.0.starts_at|date:'l d/m' }}</h2>
+    <ol class="activities">
+      {% for activity in day.list %}
+      <li class="activity">
+        <span class="dot" aria-hidden="true"></span>
+        <time class="activity-time" datetime="{{ activity.starts_at|date:'c' }}">{{ activity.starts_at|date:'H:i' }}</time>
+        <div class="activity-body">
+          <h3><a href="{% url 'activity_detail' activity.pk %}">{{ activity.title }}</a></h3>
+          <p>{{ activity.description|truncatewords:14 }}</p>
+          <p class="badge{% if activity.available == 0 %} badge--full{% endif %}">{% if activity.available > 0 %}{{ activity.available }} cupos disponibles{% else %}Completa{% endif %} · capacidad {{ activity.capacity }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% empty %}
+  <p class="empty">No hay actividades próximas habilitadas.</p>
+  {% endfor %}
+</section>
+{% endblock %}

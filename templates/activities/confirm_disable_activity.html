@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Deshabilitar {{ activity.title }}</h1>
+<p>¿Deshabilitar esta actividad? Se conservarán {{ activity.occupied }} inscripciones vigentes.</p>
+<form method="post" action="{% url 'disable_activity' activity.pk %}">
+  {% csrf_token %}<button name="confirm" value="yes">Confirmar deshabilitación</button>
+</form>
+<a href="{% url 'teacher_activities' %}">Volver a mis actividades</a>
+{% endblock %}

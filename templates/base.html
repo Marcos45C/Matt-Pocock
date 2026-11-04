@@ -1,0 +1,30 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Actividades · UNTDF</title>
+<link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="{% url 'catalog' %}">UNTDF · Actividades</a>
+    {% if user.is_authenticated %}
+    <nav>
+      <a href="{% url 'catalog' %}">Catálogo</a>
+      <a href="{% url 'mine' %}">Mis inscripciones</a>
+      {% if user.is_staff %}<a href="{% url 'teacher_activities' %}">Mis actividades</a>{% endif %}
+      <span>{{ user.username }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Salir</button></form>
+    </nav>
+    {% endif %}
+  </div>
+</header>
+<main>
+  {% for message in messages %}<p class="message {{ message.tags }}" role="status">{{ message }}</p>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<footer>Demo docente · Datos ficticios · America/Argentina/Ushuaia (UTC−03:00)</footer>
+</body>
+</html>

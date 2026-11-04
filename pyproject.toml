@@ -1,0 +1,8 @@
+[project]
+name = "demo-inscripciones"
+version = "0.1.0"
+description = "Demo docente UNTDF: inscripción a actividades"
+requires-python = ">=3.12,<3.13"
+dependencies = ["Django>=5.2,<5.3"]
+[tool.uv]
+package = false

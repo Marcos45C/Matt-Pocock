@@ -1,0 +1,4 @@
+from django.urls import path
+from django.shortcuts import redirect
+from . import views
+urlpatterns = [path("teacher/activities/<int:pk>/disable/", views.change_activity_enabled, {"enabled": False}, name="disable_activity"), path("teacher/activities/<int:pk>/enable/", views.change_activity_enabled, {"enabled": True}, name="enable_activity"), path("teacher/activities/", views.teacher_activities, name="teacher_activities"), path("teacher/activities/<int:pk>/", views.teacher_activity_detail, name="teacher_activity_detail"), path("", lambda request: redirect("catalog")), path("activities/", views.catalog, name="catalog"), path("activities/<int:pk>/", views.detail, name="activity_detail"), path("activities/<int:pk>/register/", views.enroll, name="register"), path("activities/<int:pk>/cancel/", views.cancel, name="cancel_registration"), path("my-registrations/", views.mine, name="mine")]

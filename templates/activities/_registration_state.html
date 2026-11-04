@@ -1,0 +1,6 @@
+{% if registration.cancelled_at %}
+<p class="badge badge--muted">Inscripción cancelada el {{ registration.cancelled_at|date:'d/m/Y H:i' }} · Ushuaia</p>
+{% else %}
+<p class="badge">Tu inscripción está confirmada.</p>
+{% if can_cancel %}{% include 'activities/_cancel_form.html' with activity=registration.activity %}{% endif %}
+{% endif %}

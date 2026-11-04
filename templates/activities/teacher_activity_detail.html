@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ activity.title }}</h1>
+<p>{{ activity.starts_at|date:"d/m/Y H:i" }} · {% if activity.is_active %}Habilitada{% else %}Deshabilitada{% endif %}</p>
+<h2>Inscripciones</h2>
+<table>
+  <thead><tr><th>Alumno</th><th>Fecha de inscripción</th><th>Estado</th><th>Fecha de cancelación</th></tr></thead>
+  <tbody>
+  {% for registration in registrations %}
+    <tr>
+      <td>{{ registration.student }}</td>
+      <td>{{ registration.created_at|date:"d/m/Y H:i" }}</td>
+      <td>{% if registration.cancelled_at %}Cancelada{% else %}Vigente{% endif %}</td>
+      <td>{% if registration.cancelled_at %}{{ registration.cancelled_at|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">No hay inscripciones.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'teacher_activities' %}">Volver a mis actividades</a>
+{% endblock %}

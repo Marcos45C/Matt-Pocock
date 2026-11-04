@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<header class="page-head">
+  <p class="eyebrow">Tu cuenta</p>
+  <h1>Mis inscripciones</h1>
+  <p class="lead">Solo las inscripciones de {{ user.username }}.</p>
+</header>
+
+{% if rows %}
+<ol class="activities activities--plain">
+  {% for row in rows %}
+  <li class="activity">
+    <time class="activity-time" datetime="{{ row.registration.activity.starts_at|date:'c' }}">{{ row.registration.activity.starts_at|date:'d/m/Y H:i' }}</time>
+    <div class="activity-body">
+      <h2><a href="{% url 'activity_detail' row.registration.activity.pk %}">{{ row.registration.activity.title }}</a></h2>
+      {% include 'activities/_registration_state.html' with registration=row.registration can_cancel=row.can_cancel %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="empty">Todavía no tenés inscripciones.</p>
+{% endif %}
+{% endblock %}

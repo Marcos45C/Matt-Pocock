@@ -1,0 +1,1 @@
+<form method="post" action="{% url 'cancel_registration' activity.pk %}" onsubmit="return confirm('¿Cancelar tu inscripción? El cupo quedará libre y no vas a poder volver a inscribirte.');">{% csrf_token %}<button class="button button--ghost">Cancelar inscripción</button></form>

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Mis actividades</h1>
+{% for activity in activities %}
+<article>
+  <h2><a href="{% url 'teacher_activity_detail' activity.pk %}">{{ activity.title }}</a></h2>
+  <p>{{ activity.starts_at|date:"d/m/Y H:i" }} · {% if activity.is_active %}Habilitada{% else %}Deshabilitada{% endif %}</p>
+  <p>{{ activity.occupied }} / {{ activity.capacity }} inscripciones vigentes</p>
+  {% if activity.is_active %}
+  <form method="post" action="{% url 'disable_activity' activity.pk %}">
+    {% csrf_token %}<button>Deshabilitar</button>
+  </form>
+  {% else %}
+  <form method="post" action="{% url 'enable_activity' activity.pk %}">
+    {% csrf_token %}<button>Habilitar</button>
+  </form>
+  {% endif %}
+</article>
+{% empty %}
+<p>No tenés actividades asignadas.</p>
+{% endfor %}
+{% endblock %}

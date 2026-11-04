@@ -1,0 +1,11 @@
+name: ${COMPOSE_PROJECT_NAME:-sdd-base}
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:${DEMO_PORT:-8000}:8000"
+    volumes:
+      - .:/app
+    environment:
+      DEMO_DATA_DIR: /app/data
+      UV_PROJECT_ENVIRONMENT: /opt/venv
