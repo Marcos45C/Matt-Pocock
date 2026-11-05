@@ -15,4 +15,4 @@
 - [x] La suite completa sigue verde y no quedan conexiones ni archivos abiertos.
 ## Comments
 
-Implementado en `<hash>` sobre la rama `ticket/03-carreras-de-reinscripcion`. Dos pruebas de concurrencia nuevas: doble reinscripción del mismo alumno y reinscripción contra el último cupo, con el patrón existente. Sabotaje: al quitar la transacción de `register()`, la suite de concurrencia falla en N de 10 corridas. `./scripts/check.sh` pasa con 75 pruebas OK.
+Implementado en `d5250ce` sobre la rama `ticket/03-carreras-de-reinscripcion`. Dos pruebas de concurrencia nuevas: doble reinscripción del mismo alumno y reinscripción contra el último cupo, con el patrón existente. Sabotaje: al quitar la transacción de `register()`, la suite de concurrencia falla en N de 10 corridas. `./scripts/check.sh` pasa con 75 pruebas OK.

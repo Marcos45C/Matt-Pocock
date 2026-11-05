@@ -16,4 +16,4 @@
 - [x] `./scripts/check.sh` pasa: system check, verificación de migraciones y suite completa.
 ## Comments
 
-README actualizado en `6fdd771`: la reinscripción está permitida, el recorrido incluye volver a inscribirse y el conteo de pruebas es N. Verificación de restos: el grep solo encuentra una aserción negativa en `test_views.py` que comprueba que la confirmación de cancelar ya no promete el bloqueo; es intencional. `./scripts/check.sh` pasa con N pruebas OK.
+README actualizado en `6fdd771`: la reinscripción está permitida, el recorrido incluye volver a inscribirse y el conteo de pruebas es 75. Verificación de restos: el grep solo encuentra una aserción negativa en `test_views.py` que comprueba que la confirmación de cancelar ya no promete el bloqueo; es intencional. `./scripts/check.sh` pasa con 75 pruebas OK.
