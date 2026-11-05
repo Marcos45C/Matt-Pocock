@@ -1,6 +1,6 @@
 # Demo de inscripciones · UNTDF
 
-Punto de partida del alumno: Django clásico, sesiones, templates y SQLite. Todas las inscripciones están confirmadas. Uso local docente, datos ficticios; no es una configuración de producción.
+Punto de partida del alumno: Django clásico, sesiones, templates y SQLite. Los alumnos pueden inscribirse, cancelar y volver a inscribirse. Uso local docente, datos ficticios; no es una configuración de producción.
 
 ## Arranque con uv
 
@@ -13,7 +13,7 @@ uv run --locked python manage.py seed_demo
 uv run --locked python manage.py runserver 127.0.0.1:8000
 ```
 
-Abrir http://localhost:8000/ . Cuentas ficticias: `ana`, `bruno`, `docente`, `docente1`, `docente2`; contraseña inicial `untdf-demo-2026`. Docente entra en `/admin/`; `docente1` y `docente2` pueden consultar sus actividades en `/teacher/activities/`. Las actividades de ejemplo se reparten entre ambos. Las cuentas existentes conservan su contraseña y permisos al repetir seed. Recorrido: ingresar → catálogo → actividad → inscribirme → mis inscripciones → cancelar → salir (POST). Todos los horarios se muestran en America/Argentina/Ushuaia.
+Abrir http://localhost:8000/ . Cuentas ficticias: `ana`, `bruno`, `docente`, `docente1`, `docente2`; contraseña inicial `untdf-demo-2026`. Docente entra en `/admin/`; `docente1` y `docente2` pueden consultar sus actividades en `/teacher/activities/`. Las actividades de ejemplo se reparten entre ambos. Las cuentas existentes conservan su contraseña y permisos al repetir seed. Recorrido: ingresar → catálogo → actividad → inscribirme → mis inscripciones → cancelar → volver a inscribirme → salir (POST). Todos los horarios se muestran en America/Argentina/Ushuaia.
 
 ```sh
 ./scripts/check.sh
@@ -27,7 +27,7 @@ git config core.hooksPath .githooks
 
 Los commits de solo documentación no lo disparan. En CI, `.github/workflows/check.yml` corre el mismo script.
 
-Las pruebas usan `data/test.sqlite3`, aislada de `data/db.sqlite3`, y eliminan únicamente la base de pruebas. La suite completa corre 50 pruebas. Las pruebas concurrentes usan conexiones independientes y un archivo real, con barrera de inicio. No ejecutar dos suites sobre la misma carpeta al mismo tiempo.
+Las pruebas usan `data/test.sqlite3`, aislada de `data/db.sqlite3`, y eliminan únicamente la base de pruebas. La suite completa corre N pruebas. Las pruebas concurrentes usan conexiones independientes y un archivo real, con barrera de inicio. No ejecutar dos suites sobre la misma carpeta al mismo tiempo.
 
 ## Responsables docentes
 
@@ -37,7 +37,10 @@ Cada actividad tiene un responsable staff, asignable desde la administración. E
 
 Con una inscripción vigente, el detalle de la actividad y "Mis inscripciones" ofrecen **Cancelar inscripción** con confirmación del navegador. El botón aparece solo dentro de la ventana de cancelación; fuera de ella, el detalle explica el límite. La ventana es inclusiva: se puede cancelar hasta 24 horas antes del inicio, aunque la actividad esté deshabilitada. Si falta menos de 24 horas, si la actividad ya empezó o si ya pasó, la cancelación se rechaza con un mensaje que lo explica.
 
-Cancelar no borra la inscripción: conserva la fila con la fecha y hora de la cancelación en America/Argentina/Ushuaia y libera el cupo de inmediato. El catálogo vuelve a ofrecer la actividad y el docente puede reducir la capacidad, que se valida solo contra inscripciones vigentes. La inscripción cancelada sigue apareciendo en "Mis inscripciones" con su badge y su fecha, sin botón. No hay reinscripción: la misma actividad rechaza un nuevo intento con un mensaje propio —"cancelaste tu inscripción"— y el detalle explica el bloqueo en lugar de mostrar el formulario. El docente ve la fecha de cancelación en el listado y en el detalle de la administración, que sigue siendo de solo consulta.
+Cancelar no borra la inscripción: conserva la fila con la fecha y hora de la cancelación en America/Argentina/Ushuaia y libera el cupo de inmediato. El catálogo vuelve a ofrecer la actividad y el docente puede reducir la capacidad, que se valida solo contra inscripciones vigentes. La inscripción cancelada sigue apareciendo en "Mis inscripciones" con su badge y su fecha, sin botón.  
+
+La reinscripción está permitida (ADR 0002): quien canceló puede volver a inscribirse en la misma actividad, sin límite de veces, si está habilitada, no empezó y hay cupo. Cada reinscripción crea una fila nueva y conserva la cancelada como historial, con a lo sumo una inscripción vigente por alumno y actividad. El detalle muestra la fecha de la última cancelación junto al formulario normal con “Inscribirme”, y “Mis inscripciones” lista todas las filas.
+El docente ve la fecha de cancelación en el listado y en el detalle de la administración, que sigue siendo de solo consulta, y en el detalle de su actividad ve todas las filas de cada alumno, con las vigentes primero.
 
 Cancelar es siempre un `POST` con CSRF e identidad tomada de la sesión; `GET` responde 405. La contención de la base devuelve un resultado reintentable sin efectos parciales, y la operación comparte la transacción `IMMEDIATE` con la inscripción.
 
