@@ -13,6 +13,10 @@ class ConcurrencyTests(TransactionTestCase):
     def setUp(self):
         self.ana=get_user_model().objects.create_user("a");self.bruno=get_user_model().objects.create_user("b")
         self.activity=activity(capacity=1)
+    def enroll(self, user=None, **kwargs):
+        return register(student=user or self.ana, activity_id=self.activity.pk, now=NOW, **kwargs)
+    def cancel(self, student=None, **kwargs):
+        return cancel_registration(student=student or self.ana, activity_id=self.activity.pk, now=NOW, **kwargs)
     def test_default_clock_after_lock_rejects_activity_that_started(self):
         self.activity.starts_at=NOW+timedelta(seconds=1);self.activity.save()
         self.assertFalse(connections["default"].in_atomic_block)
@@ -42,6 +46,24 @@ class ConcurrencyTests(TransactionTestCase):
     def test_two_students_last_seat(self):
         self.assertCountEqual(self.race_registrations([self.ana,self.bruno]),["registered","full"])
         self.assertEqual(Registration.objects.count(),1)
+        self.assertEqual(with_availability().get(pk=self.activity.pk).available,0)
+
+    def test_two_simultaneous_registrations_after_cancellation(self):
+        self.enroll(self.ana)
+        self.cancel(student=self.ana)
+        outcomes=self.race_registrations([self.ana,self.ana])
+        self.assertCountEqual(outcomes,["registered","already_registered"])
+        self.assertEqual(Registration.objects.count(),2)
+        self.assertEqual(Registration.objects.filter(cancelled_at__isnull=True).count(),1)
+        self.assertEqual(with_availability().get(pk=self.activity.pk).available,0)
+
+    def test_reinscription_against_last_seat_with_cancelled(self):
+        self.enroll(self.ana)
+        self.cancel(student=self.ana)
+        self.activity.capacity=1; self.activity.save()
+        outcomes=self.race_registrations([self.ana,self.bruno])
+        self.assertCountEqual(outcomes,["registered","full"])
+        self.assertEqual(Registration.objects.filter(cancelled_at__isnull=True).count(),1)
         self.assertEqual(with_availability().get(pk=self.activity.pk).available,0)
     def test_simultaneous_duplicate(self):
         self.assertCountEqual(self.race_registrations([self.ana,self.ana]),["registered","already_registered"])
