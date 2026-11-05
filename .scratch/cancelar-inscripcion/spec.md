@@ -67,7 +67,7 @@ El alumno puede cancelar su propia inscripción, desde el detalle de la activida
 
 ## Out of Scope
 
-- Reinscripción después de cancelar; se evalúa más adelante y hoy está bloqueada a propósito.
+- Reinscripción después de cancelar; se evalúa más adelante y hoy está bloqueada a propósito. *Revertido por `.scratch/reinscripcion/spec.md` (ADR 0002).*
 - Cancelación por parte del docente o del administrador.
 - Lista de espera, notificaciones, correo, o asignación del cupo liberado a una persona en particular.
 - Auditoría más allá del instante de la cancelación (quién canceló ya está implícito: el dueño).

@@ -14,7 +14,7 @@ _Avoid_: Registro, reserva, alta
 
 **Inscripción vigente**:
 Inscripción no cancelada. Es la única que ocupa cupo y la que impide otra inscripción vigente en la misma actividad.
-_Avoid_: Inscripción activa, inscripción confirmada
+_Avoid_: Inscripción activa
 
 **Reinscripción**:
 Nueva inscripción de un alumno en una actividad donde ya tuvo una inscripción cancelada. Crea un vínculo nuevo y conserva la cancelada como historial; no reactiva la anterior.

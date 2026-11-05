@@ -15,6 +15,6 @@ Un alumno que canceló su inscripción puede volver a inscribirse en la misma ac
 - El `UniqueConstraint(student, activity)` se reemplaza por uno parcial sobre `cancelled_at IS NULL`; las canceladas pueden repetirse.
 - `register()` deja de devolver `previously_cancelled` y evalúa una inscripción vigente antes que habilitación, inicio y cupo; la reinscripción comparte las reglas y los rechazos de una inscripción normal.
 - El resultado es `registered` también para la reinscripción; el mensaje no distingue el caso.
-- Un alumno puede acumular varias filas canceladas por actividad; el historial queda visible para él y para el docente.
+- Un alumno puede acumular varias filas canceladas por actividad; "Mis inscripciones" y la vista docente muestran el historial completo, y el detalle muestra la última cancelación.
 - La ventana de cancelación no cambia: se puede cancelar hasta 24 h antes del inicio, incluso si la actividad está deshabilitada.
 - `seed_demo` sigue comprobando existencia sin filtrar estado, así que no recrea una inscripción cancelada.
