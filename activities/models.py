@@ -26,7 +26,7 @@ class Registration(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     cancelled_at = models.DateTimeField("cancelación", null=True, blank=True)
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["student", "activity"], name="one_registration_per_student_activity")]
+        constraints = [models.UniqueConstraint(fields=["student", "activity"], condition=models.Q(cancelled_at__isnull=True), name="one_current_registration_per_student_activity")]
         ordering = ["-created_at", "-pk"]
         verbose_name = "inscripción"
     def __str__(self):

@@ -64,20 +64,52 @@ class ServiceTests(BaseCase):
     def test_success_and_availability(self):
         self.assertEqual(self.enroll(), "registered")
         self.assertEqual(with_availability().get(pk=self.activity.pk).available, 1)
-    def test_previously_cancelled_even_when_now_full_disabled_or_started(self):
-        self.activity.capacity=1; self.activity.save()
-        self.enroll(); self.cancel()
-        self.activity.starts_at=NOW; self.activity.is_active=False; self.activity.save()
-        self.assertEqual(self.enroll(), "previously_cancelled")
-        self.assertEqual(Registration.objects.count(), 1)
+    def test_cancellation_targets_the_current_registration_even_if_another_row_is_newer(self):
+        self.enroll()
+        current=Registration.objects.get()
+        Registration.objects.create(student=self.ana,activity=self.activity,cancelled_at=NOW)
+        self.assertEqual(self.cancel(), "cancelled")
+        current.refresh_from_db()
+        self.assertEqual(current.cancelled_at, NOW)
+        self.assertEqual(Registration.objects.filter(cancelled_at__isnull=True).count(), 0)
     def test_duplicate_even_when_now_full_or_started(self):
         self.enroll()
         self.activity.capacity=1; self.activity.starts_at=NOW; self.activity.is_active=False; self.activity.save()
         self.assertEqual(self.enroll(), "already_registered")
         self.assertEqual(Registration.objects.count(), 1)
-    def test_reregistration_over_cancelled_is_its_own_result_and_creates_no_row(self):
+    def test_reregistration_creates_a_new_row_and_keeps_the_cancelled_one(self):
+        self.enroll()
+        cancelled=Registration.objects.get()
+        self.cancel()
+        self.assertEqual(self.enroll(), "registered")
+        self.assertEqual(Registration.objects.count(), 2)
+        self.assertEqual(Registration.objects.filter(student=self.ana,activity=self.activity,cancelled_at__isnull=True).count(), 1)
+        self.assertTrue(Registration.objects.filter(pk=cancelled.pk,cancelled_at=NOW).exists())
+        self.assertEqual(with_availability().get(pk=self.activity.pk).available, 1)
+    def test_reregistration_has_no_limit(self):
+        for _ in range(2):
+            self.assertEqual(self.enroll(), "registered")
+            self.assertEqual(self.cancel(), "cancelled")
+        self.assertEqual(self.enroll(), "registered")
+        self.assertEqual(Registration.objects.count(), 3)
+        self.assertEqual(Registration.objects.filter(cancelled_at__isnull=True).count(), 1)
+        self.assertEqual(with_availability().get(pk=self.activity.pk).available, 1)
+    def test_reregistration_is_rejected_when_activity_is_full(self):
         self.enroll(); self.cancel()
-        self.assertEqual(self.enroll(), "previously_cancelled")
+        self.activity.capacity=1; self.activity.save()
+        self.assertEqual(self.enroll(self.bruno), "registered")
+        self.assertEqual(self.enroll(), "full")
+        self.assertEqual(Registration.objects.count(), 2)
+        self.assertEqual(Registration.objects.filter(cancelled_at__isnull=True).count(), 1)
+    def test_reregistration_is_rejected_when_activity_is_disabled(self):
+        self.enroll(); self.cancel()
+        self.activity.is_active=False; self.activity.save()
+        self.assertEqual(self.enroll(), "disabled")
+        self.assertEqual(Registration.objects.count(), 1)
+    def test_reregistration_is_rejected_when_activity_started(self):
+        self.enroll(); self.cancel()
+        self.activity.starts_at=NOW; self.activity.save()
+        self.assertEqual(self.enroll(), "started")
         self.assertEqual(Registration.objects.count(), 1)
     def test_full(self):
         self.activity.capacity=1; self.activity.save(); self.enroll()
@@ -100,6 +132,12 @@ class ServiceTests(BaseCase):
         self.enroll(); self.enroll(self.bruno)
         self.activity.capacity=1
         with self.assertRaises(ValidationError): self.activity.full_clean()
+    def test_partial_unique_constraint_allows_many_cancelled_and_rejects_two_current(self):
+        Registration.objects.create(student=self.ana,activity=self.activity,cancelled_at=NOW)
+        Registration.objects.create(student=self.ana,activity=self.activity,cancelled_at=NOW+timedelta(hours=1))
+        Registration.objects.create(student=self.ana,activity=self.activity)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Registration.objects.create(student=self.ana,activity=self.activity)
     def test_positive_capacity_database_constraint(self):
         with self.assertRaises(IntegrityError), transaction.atomic(): activity(capacity=0)
     def test_busy_is_recoverable_other_errors_propagate(self):

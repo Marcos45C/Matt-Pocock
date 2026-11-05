@@ -12,7 +12,6 @@ MESSAGES = {
     "disabled_activity": "Actividad deshabilitada; se conservaron las inscripciones vigentes.",
     "registered": "Inscripción confirmada.",
     "already_registered": "Ya estás inscripto en esta actividad.",
-    "previously_cancelled": "Cancelaste tu inscripción; no podés volver a inscribirte.",
     "full": "La actividad no tiene cupos disponibles.",
     "started": "La actividad ya comenzó.",
     "disabled": "La actividad está deshabilitada.",
@@ -43,9 +42,9 @@ def register(*, student, activity_id, now=None):
             activity = Activity.objects.filter(pk=activity_id).first()
             if activity is None:
                 return "not_available"
-            registration = Registration.objects.filter(student=student, activity=activity).first()
+            registration = Registration.objects.filter(student=student, activity=activity, cancelled_at__isnull=True).first()
             if registration is not None:
-                return "already_registered" if registration.cancelled_at is None else "previously_cancelled"
+                return "already_registered"
             if not activity.is_active:
                 return "disabled"
             now = now or timezone.now()  # Instante real después de adquirir IMMEDIATE.
@@ -68,11 +67,9 @@ def cancel_registration(*, student, activity_id, now=None):
             activity = Activity.objects.filter(pk=activity_id).first()
             if activity is None:
                 return "not_available"
-            registration = Registration.objects.filter(student=student, activity=activity).first()
+            registration = Registration.objects.filter(student=student, activity=activity, cancelled_at__isnull=True).first()
             if registration is None:
-                return "not_registered"
-            if registration.cancelled_at is not None:
-                return "already_cancelled"
+                return "already_cancelled" if Registration.objects.filter(student=student, activity=activity).exists() else "not_registered"
             now = now or timezone.now()  # Instante real después de adquirir IMMEDIATE.
             if not within_cancellation_window(activity, now):
                 return "window_closed"

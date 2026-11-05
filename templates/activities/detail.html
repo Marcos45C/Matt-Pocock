@@ -18,17 +18,20 @@
   <section class="panel">
     {% if registration %}
       {% include 'activities/_registration_state.html' with registration=registration can_cancel=can_cancel %}
-      {% if registration.cancelled_at %}
-      <p>No podés volver a inscribirte en esta actividad.</p>
-      {% elif not can_cancel %}
+      {% if not can_cancel %}
       <p class="muted">Solo podés cancelar hasta {{ cancellation_window_hours }} horas antes del inicio de la actividad.</p>
       {% endif %}
-    {% elif can_register %}
-    <form method="post" action="{% url 'register' activity.pk %}" class="inline-form">
-      {% csrf_token %}{{ form }}<button>Inscribirme</button>
-    </form>
     {% else %}
-    <p class="muted">Esta actividad no admite nuevas inscripciones.</p>
+      {% if last_cancelled_registration %}
+      {% include 'activities/_registration_state.html' with registration=last_cancelled_registration can_cancel=False %}
+      {% endif %}
+      {% if can_register %}
+      <form method="post" action="{% url 'register' activity.pk %}" class="inline-form">
+        {% csrf_token %}{{ form }}<button>Inscribirme</button>
+      </form>
+      {% else %}
+      <p class="muted">Esta actividad no admite nuevas inscripciones.</p>
+      {% endif %}
     {% endif %}
   </section>
 </article>

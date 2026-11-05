@@ -52,28 +52,53 @@ class ViewTests(BaseCase):
         self.assertEqual(self.cancel(now=NOW+timedelta(hours=1)),"already_cancelled")
         response=page()
         self.assertContains(response,"Inscripción cancelada el 01/10/2030 09:00")
-        self.assertNotContains(response,"Cancelar inscripción");self.assertNotContains(response,"Inscribirme")
-    def test_reregistration_over_cancelled_explains_and_creates_no_row(self):
+        self.assertNotContains(response,"Cancelar inscripción");self.assertContains(response,"Inscribirme")
+    def test_detail_after_cancellation_shows_the_last_cancellation_and_offers_registration(self):
         self.client.force_login(self.ana); self.enroll(); self.cancel()
         with freeze_view_clock(self.client, NOW):
             page=self.client.get(f"/activities/{self.activity.pk}/")
-            response=self.client.post(f"/activities/{self.activity.pk}/register/", follow=True)
-        self.assertContains(page,"No podés volver a inscribirte en esta actividad.")
-        self.assertNotContains(page,"Inscribirme")
-        self.assertContains(response,"Cancelaste tu inscripción; no podés volver a inscribirte.")
-        self.assertNotContains(response,"Ya estás inscripto")
-        self.assertEqual(Registration.objects.count(),1)
-    def test_http_reregistration_blocked_when_full_disabled_or_started(self):
+        self.assertContains(page,"Inscripción cancelada el 01/10/2030 09:00")
+        self.assertContains(page,"Inscribirme")
+        self.assertNotContains(page,"No podés volver a inscribirte en esta actividad.")
+    def test_detail_shows_only_the_latest_cancellation(self):
         self.client.force_login(self.ana)
-        configurations={"llena":dict(capacity=1),"deshabilitada":dict(is_active=False),"iniciada":dict(starts_at=timezone.now()-timedelta(hours=1))}
-        for name,config in configurations.items():
+        self.enroll(); self.cancel(now=NOW)
+        self.enroll(); self.cancel(now=NOW+timedelta(hours=1))
+        with freeze_view_clock(self.client, NOW):
+            page=self.client.get(f"/activities/{self.activity.pk}/")
+        self.assertContains(page,"Inscripción cancelada el 01/10/2030 10:00")
+        self.assertNotContains(page,"Inscripción cancelada el 01/10/2030 09:00")
+    def test_reregistration_from_detail_creates_a_new_row_and_confirms(self):
+        self.client.force_login(self.ana); self.enroll()
+        cancelled=Registration.objects.get(); self.cancel()
+        with freeze_view_clock(self.client,NOW):
+            response=self.client.post(f"/activities/{self.activity.pk}/register/",follow=True)
+        self.assertContains(response,"Inscripción confirmada.")
+        self.assertEqual(Registration.objects.count(),2)
+        self.assertTrue(Registration.objects.filter(pk=cancelled.pk,cancelled_at=NOW).exists())
+        self.assertEqual(Registration.objects.filter(cancelled_at__isnull=True).count(),1)
+        self.assertContains(response,"Tu inscripción está confirmada.")
+        self.assertNotContains(response,"Inscribirme")
+    def test_http_reregistration_rejections_keep_the_cancellation_date_and_create_no_row(self):
+        self.client.force_login(self.ana)
+        configurations={
+            "llena":(dict(capacity=1),"La actividad no tiene cupos disponibles."),
+            "deshabilitada":(dict(is_active=False),"La actividad está deshabilitada."),
+            "iniciada":(dict(starts_at=timezone.now()-timedelta(hours=1)),"La actividad ya comenzó."),
+        }
+        for name,(config,expected) in configurations.items():
             with self.subTest(name):
                 target=activity(title=name,**config)
                 Registration.objects.create(student=self.ana,activity=target,cancelled_at=NOW)
                 if name=="llena": Registration.objects.create(student=self.bruno,activity=target)
                 before=Registration.objects.count()
+                with freeze_view_clock(self.client,NOW):
+                    page=self.client.get(f"/activities/{target.pk}/")
                 response=self.client.post(f"/activities/{target.pk}/register/",follow=True)
-                self.assertContains(response,"Cancelaste tu inscripción; no podés volver a inscribirte.")
+                self.assertContains(page,"Inscripción cancelada el 01/10/2030 09:00")
+                self.assertContains(page,"Esta actividad no admite nuevas inscripciones.")
+                self.assertNotContains(page,"Inscribirme")
+                self.assertContains(response,expected)
                 self.assertEqual(Registration.objects.count(),before)
     def test_catalog_filters_and_full_visible(self):
         self.client.force_login(self.ana)
@@ -101,6 +126,8 @@ class ViewTests(BaseCase):
                 return self.client.get("/my-registrations/")
         response=page()
         self.assertContains(response,"Cancelar inscripción");self.assertContains(response,"confirm('¿Cancelar tu inscripción?")
+        self.assertContains(response,"El cupo quedará libre y vas a poder volver a inscribirte si todavía hay cupo.")
+        self.assertNotContains(response,"no vas a poder volver a inscribirte")
         self.activity.starts_at=NOW+timedelta(hours=2);self.activity.save()
         self.assertNotContains(page(),"Cancelar inscripción")
         self.activity.starts_at=NOW+timedelta(hours=48);self.activity.save()
