@@ -6,11 +6,14 @@
 
 **Spec:** ../spec.md
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] La sección "Cancelar una inscripción" del README dice que la reinscripción está permitida, que crea una fila nueva, que conserva la cancelada y que sigue las reglas de habilitación, inicio y cupo.
-- [ ] El README describe que el detalle muestra la última cancelación y el formulario normal con "Inscribirme", y que "Mis inscripciones" conserva todo el historial.
-- [ ] El recorrido del README incluye cancelar y reinscribir, y el conteo de pruebas coincide con la suite final.
-- [ ] No quedan `previously_cancelled` ni el texto "no vas a poder volver a inscribirte" en código, plantillas o README.
-- [ ] El README, el glosario y el ADR 0002 no se contradicen.
-- [ ] `./scripts/check.sh` pasa: system check, verificación de migraciones y suite completa.
+- [x] La sección "Cancelar una inscripción" del README dice que la reinscripción está permitida, que crea una fila nueva, que conserva la cancelada y que sigue las reglas de habilitación, inicio y cupo.
+- [x] El README describe que el detalle muestra la última cancelación y el formulario normal con "Inscribirme", y que "Mis inscripciones" conserva todo el historial.
+- [x] El recorrido del README incluye cancelar y reinscribir, y el conteo de pruebas coincide con la suite final.
+- [x] No quedan `previously_cancelled` ni el texto "no vas a poder volver a inscribirte" en código, plantillas o README.
+- [x] El README, el glosario y el ADR 0002 no se contradicen.
+- [x] `./scripts/check.sh` pasa: system check, verificación de migraciones y suite completa.
+## Comments
+
+README actualizado en `6fdd771`: la reinscripción está permitida, el recorrido incluye volver a inscribirse y el conteo de pruebas es N. Verificación de restos: el grep solo encuentra una aserción negativa en `test_views.py` que comprueba que la confirmación de cancelar ya no promete el bloqueo; es intencional. `./scripts/check.sh` pasa con N pruebas OK.
