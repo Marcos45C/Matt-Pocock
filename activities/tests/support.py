@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone as dt_timezone
 from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from activities.models import Activity
+from activities.models import Activity, Registration
 from activities.services import cancel_registration, register
 
 NOW = datetime(2030, 10, 1, 12, tzinfo=dt_timezone.utc)
@@ -45,3 +45,11 @@ class BaseCase(TestCase):
     def cancel(self, user=None, **kwargs):
         kwargs.setdefault("now", NOW)
         return cancel_registration(student=user or self.ana, activity_id=self.activity.pk, **kwargs)
+    def reregister_with_history(self):
+        """Deja una fila cancelada y una vigente de Ana; devuelve (cancelada, vigente)."""
+        self.enroll()
+        cancelled = Registration.objects.get(cancelled_at__isnull=True)
+        self.cancel(now=NOW)
+        self.enroll()
+        current = Registration.objects.get(cancelled_at__isnull=True)
+        return cancelled, current
