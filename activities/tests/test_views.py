@@ -135,6 +135,20 @@ class ViewTests(BaseCase):
         response=page()
         self.assertContains(response,"Inscripción cancelada el 01/10/2030 09:00")
         self.assertNotContains(response,"Cancelar inscripción")
+    def test_mine_lists_all_rows_of_a_reregistered_activity_newest_first(self):
+        self.client.force_login(self.ana)
+        self.enroll(); cancelled=Registration.objects.get(); self.cancel(now=NOW)
+        self.enroll(); current=Registration.objects.get(cancelled_at__isnull=True)
+        Registration.objects.filter(pk=cancelled.pk).update(created_at=NOW-timedelta(hours=2))
+        Registration.objects.filter(pk=current.pk).update(created_at=NOW-timedelta(hours=1))
+        Registration.objects.create(student=self.bruno,activity=self.activity,cancelled_at=NOW)
+        with freeze_view_clock(self.client,NOW): response=self.client.get("/my-registrations/")
+        html=response.content.decode()
+        self.assertEqual(html.count(f'href="/activities/{self.activity.pk}/"'),2)
+        self.assertLess(html.index("Tu inscripción está confirmada."),html.index("Inscripción cancelada el 01/10/2030 09:00"))
+        self.assertContains(response,"Inscripción cancelada el 01/10/2030 09:00")
+        self.assertContains(response,"Cancelar inscripción",count=1)
+        self.assertNotContains(response,f'action="/activities/{self.activity.pk}/register/"')
     def test_mine_evaluates_the_window_at_a_single_instant(self):
         self.client.force_login(self.ana)
         for title in ("Taller","Clínica"):
@@ -295,6 +309,21 @@ class ViewTests(BaseCase):
         self.assertContains(response,'Cancelada')
         html=response.content.decode()
         self.assertLess(html.index('bruno'),html.index('ana'))
+    def test_teacher_detail_lists_every_row_of_a_reregistered_student_current_first(self):
+        from django.contrib.auth import get_user_model
+        teacher=get_user_model().objects.create_user("docente-historial",is_staff=True)
+        self.activity.responsible=teacher; self.activity.save()
+        self.enroll(); cancelled=Registration.objects.get(); self.cancel(now=NOW)
+        self.enroll(); current=Registration.objects.get(cancelled_at__isnull=True)
+        Registration.objects.filter(pk=cancelled.pk).update(created_at=NOW-timedelta(days=1))
+        Registration.objects.filter(pk=current.pk).update(created_at=NOW)
+        self.client.force_login(teacher)
+        response=self.client.get(f"/teacher/activities/{self.activity.pk}/")
+        html=response.content.decode()
+        self.assertEqual(html.count("<td>ana</td>"),2)
+        self.assertLess(html.index("Vigente"),html.index("Cancelada"))
+        self.assertContains(response,"30/09/2030 09:00")
+        self.assertContains(response,"01/10/2030 09:00")
     def test_teacher_detail_requires_staff_and_ownership(self):
         from django.contrib.auth import get_user_model
         User=get_user_model()

@@ -16,6 +16,13 @@ class AdminTests(BaseCase):
         expected="1 Oct. 2030 09:00"
         self.assertContains(self.client.get("/admin/activities/registration/"),expected)
         self.assertContains(self.client.get(f"/admin/activities/registration/{registration.pk}/change/"),expected)
+    def test_admin_registration_list_shows_all_rows_of_a_reregistered_student(self):
+        self.enroll(); self.cancel(); self.enroll()
+        login_teacher(self.client)
+        response=self.client.get("/admin/activities/registration/")
+        self.assertContains(response,"ana",count=2)
+        self.assertContains(response,"1 Oct. 2030 09:00")
+        self.assertEqual(self.client.get("/admin/activities/registration/add/").status_code,403)
     def test_admin_registration_stays_read_only(self):
         self.enroll();self.cancel()
         login_teacher(self.client)
